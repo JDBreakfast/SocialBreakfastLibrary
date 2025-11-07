@@ -1,218 +1,183 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Social Breakfast</title>
-  <meta name="description" content="Social Breakfast — a curated feed of inspiring social media content" />
-  <style>
-    :root {
-      --bg: #0b0d10;
-      --card: #0f1114;
-      --muted: #9aa3ab;
-      --accent: #ffd166;
-      --pad: 18px;
-      --maxw: 1080px; /* max width for content */
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Breakfast</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --card: #0f1114;
+    --muted: #9aa3ab;
+    --accent: #ffd166;
+    --pad: 12px;
+    --gap: 12px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  }
 
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: linear-gradient(180deg, var(--bg), #050607);
-      color: #e6eef3;
-    }
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: #e6eef3;
+  }
 
-    .wrap {
-      max-width: var(--maxw);
-      margin: 28px auto;
-      padding: 0 var(--pad);
-    }
+  h1 {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 28px;
+  }
 
-    header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap);
+    padding: var(--pad);
+    max-width: 1440px;
+    margin: 0 auto;
+  }
 
-    h1 {
-      font-size: 26px;
-      margin: 0;
-      letter-spacing: 0.2px;
-    }
-
+  @media (max-width: 1024px) {
     .grid {
-      display: grid;
-      grid-template-columns: repeat(1, 1fr); /* one column, content is fixed width */
-      justify-items: center;
-      gap: 28px;
+      grid-template-columns: repeat(2, 1fr);
     }
+  }
 
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.03);
-      padding: 12px;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.6);
-      width: 100%;
-      max-width: var(--maxw);
+  @media (max-width: 640px) {
+    .grid {
+      grid-template-columns: 1fr;
     }
+  }
 
-    .meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
+  .card {
+    background: var(--card);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
+  .embed-wrap {
+    width: 100%;
+    aspect-ratio: 1/1; /* square like Instagram grid */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
 
-    .link {
-      font-size: 13px;
-      color: var(--muted);
-      word-break: break-all;
-    }
+  .embed-wrap iframe,
+  .embed-wrap blockquote,
+  .embed-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-    /* Uniform embed styling */
-    .embed-wrap {
-      width: 100%;
-      max-width: 1080px;
-      margin: 0 auto;
-    }
+  .link {
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--muted);
+    word-break: break-all;
+    text-align: center;
+  }
 
-    .embed-wrap iframe,
-    .embed-wrap blockquote,
-    .embed-wrap video {
-      width: 100% !important;
-      max-width: 1080px;
-      height: auto !important;
-      aspect-ratio: 16 / 9; /* maintain aspect ratio for videos */
-    }
-
-    .loader {
-      text-align: center;
-      color: var(--muted);
-      padding: 40px 0;
-    }
-  </style>
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Social Breakfast</h1>
-    </header>
 
-    <div id="grid" class="grid" aria-live="polite">
-      <div class="loader">Loading posts…</div>
-    </div>
+<h1>Social Breakfast</h1>
+<div class="grid" id="grid">
+  <p style="color:var(--muted); text-align:center;">Loading posts...</p>
+</div>
 
-    <p style="color:var(--muted);font-size:13px;margin-top:18px">
-      Add new social media links to <code>videos.json</code> and commit to your repo — the page reads that file and renders the embeds automatically.
-    </p>
-  </div>
+<script>
+function ensureInstagramScript(callback){
+  if(window.instgrm && window.instgrm.Embeds){
+    callback();
+    return;
+  }
+  if(document.querySelector('script[data-instgrm]')){
+    document.querySelector('script[data-instgrm]').addEventListener('load', callback);
+    return;
+  }
+  const s = document.createElement('script');
+  s.async = true;
+  s.defer = true;
+  s.src = 'https://www.instagram.com/embed.js';
+  s.setAttribute('data-instgrm','');
+  s.onload = callback;
+  document.head.appendChild(s);
+}
 
-  <script>
-    function ensureInstagramScript(callback){
-      if(window.instgrm && window.instgrm.Embeds){
-        callback();
-        return;
-      }
-      if(document.querySelector('script[data-instgrm]')){
-        document.querySelector('script[data-instgrm]').addEventListener('load', callback);
-        return;
-      }
-      const s = document.createElement('script');
-      s.async = true;
-      s.defer = true;
-      s.src = 'https://www.instagram.com/embed.js';
-      s.setAttribute('data-instgrm','');
-      s.onload = callback;
-      document.head.appendChild(s);
-    }
+function createEmbed(url){
+  // Instagram
+  if(url.includes("instagram.com")) {
+    const block = document.createElement('blockquote');
+    block.className = 'instagram-media';
+    block.setAttribute('data-instgrm-permalink', url);
+    block.style.background = 'transparent';
+    block.style.width = '100%';
+    const a = document.createElement('a');
+    a.href = url;
+    block.appendChild(a);
+    return block;
+  }
+  // TikTok
+  else if(url.includes("tiktok.com")) {
+    const iframe = document.createElement('iframe');
+    iframe.src = url.replace("https://","https://www.") + "?embed=true";
+    iframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+    iframe.frameBorder = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.objectFit = "cover";
+    return iframe;
+  }
+  // Other links (Pinterest, Imgur, etc.)
+  else {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = "_blank";
+    a.textContent = url;
+    return a;
+  }
+}
 
-    function createEmbedBlock(url){
-      // Instagram
-      if(url.includes("instagram.com")) {
-        const block = document.createElement('blockquote');
-        block.className = 'instagram-media';
-        block.setAttribute('data-instgrm-permalink', url);
-        block.style.background = 'transparent';
-        const a = document.createElement('a');
-        a.href = url;
-        a.textContent = url;
-        block.appendChild(a);
-        return block;
-      }
-      // TikTok
-      else if(url.includes("tiktok.com")) {
-        const iframe = document.createElement('iframe');
-        iframe.src = url.replace("https://","https://www.") + "?embed=true";
-        iframe.width = "1080";
-        iframe.height = "608";
-        iframe.frameBorder = "0";
-        iframe.allow = "autoplay; encrypted-media";
-        iframe.allowFullscreen = true;
-        return iframe;
-      }
-      // Other links (Pinterest, Imgur, etc.)
-      else {
-        const a = document.createElement('a');
-        a.href = url;
-        a.target = "_blank";
-        a.textContent = url;
-        return a;
-      }
-    }
+async function loadPosts(){
+  const grid = document.getElementById('grid');
+  try{
+    const res = await fetch('videos.json', {cache:'no-cache'});
+    if(!res.ok) throw new Error('videos.json not found');
+    const urls = await res.json();
+    grid.innerHTML = '';
+    urls.forEach(url=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      const embedWrap = document.createElement('div');
+      embedWrap.className = 'embed-wrap';
+      embedWrap.appendChild(createEmbed(url));
+      card.appendChild(embedWrap);
+      const link = document.createElement('div');
+      link.className = 'link';
+      link.textContent = url;
+      card.appendChild(link);
+      grid.appendChild(card);
+    });
 
-    async function loadAndRender(){
-      const grid = document.getElementById('grid');
-      try {
-        const res = await fetch('videos.json', {cache: 'no-cache'});
-        if(!res.ok) throw new Error('videos.json not found');
-        const urls = await res.json();
-        grid.innerHTML = '';
-        if(!Array.isArray(urls) || urls.length === 0){
-          grid.innerHTML = '<div class="loader">No posts found — add links to <code>videos.json</code>.</div>';
-          return;
-        }
+    ensureInstagramScript(()=>{try{window.instgrm.Embeds.process()}catch(e){console.warn(e)}});
+  } catch(err){
+    console.error(err);
+    grid.innerHTML = '<p style="text-align:center;color:#999;">Error loading videos.json</p>';
+  }
+}
 
-        urls.forEach(url => {
-          const card = document.createElement('div');
-          card.className = 'card';
+window.addEventListener('load', loadPosts);
+</script>
 
-          const meta = document.createElement('div');
-          meta.className = 'meta';
-          const dot = document.createElement('div'); dot.className = 'dot';
-          const link = document.createElement('div'); link.className = 'link'; link.textContent = url;
-          meta.appendChild(dot); meta.appendChild(link);
-          card.appendChild(meta);
-
-          const embedWrap = document.createElement('div');
-          embedWrap.className = 'embed-wrap';
-          embedWrap.appendChild(createEmbedBlock(url));
-          card.appendChild(embedWrap);
-
-          grid.appendChild(card);
-        });
-
-        ensureInstagramScript(() => {
-          try{ window.instgrm.Embeds.process(); } catch(e) { console.warn('Instagram embed error', e); }
-        });
-
-      } catch(err) {
-        console.error(err);
-        grid.innerHTML = '<div class="loader">Error loading <code>videos.json</code> — check that the file exists and is valid JSON.</div>';
-      }
-    }
-
-    window.addEventListener('load', loadAndRender);
-    setInterval(loadAndRender, 60000);
-  </script>
 </body>
 </html>
